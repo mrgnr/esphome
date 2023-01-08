@@ -1,8 +1,9 @@
 #pragma once
 
-#include "esphome/core/component.h"
-#include "esphome/components/sensor/sensor.h"
-#include "esphome/components/i2c/i2c.h"
+#include "esphome.h"
+// #include "esphome/core/component.h"
+// #include "esphome/components/sensor/sensor.h"
+// #include "esphome/components/i2c/i2c.h"
 
 namespace esphome {
 namespace as7341 {
@@ -47,6 +48,9 @@ static const uint8_t AS7341_ID = 0x92;
 static const uint8_t AS7341_STATUS = 0x93;
 
 class AS7341Component : public PollingComponent, public i2c::I2CDevice {
+    public:
+        AS7341Component() : PollingComponent(15000) {}
+        void setup() override;
 
 };
 

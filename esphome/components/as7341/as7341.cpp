@@ -11,5 +11,10 @@ void AS7341Component::setup() {
     ESP_LOGCONFIG(TAG, "Setting up AS7341...");
 }
 
+void AS7341Component::update() {
+    ESP_LOGCONFIG(TAG, "Update AS7341...");
+    publish_state(321.0);
+}
+
 } // namespace as7341
 } // namespace esphome
