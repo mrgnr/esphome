@@ -3,7 +3,7 @@
 #include "esphome/core/hal.h"
 
 namespace esphome {
-namespace dps310 {
+namespace as7341 {
 
 static const char *const TAG = "as7341";
 
