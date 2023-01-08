@@ -1,4 +1,4 @@
-#include "dps310.h"
+#include "as7341.h"
 #include "esphome/core/log.h"
 #include "esphome/core/hal.h"
 
