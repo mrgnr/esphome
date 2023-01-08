@@ -9,7 +9,7 @@ static const char *const TAG = "as7341";
 
 void AS7341Component::setup() {
     ESP_LOGCONFIG(TAG, "Setting up AS7341...");
-
+}
 
 } // namespace as7341
 } // namespace esphome

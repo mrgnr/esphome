@@ -12,9 +12,9 @@ static const uint8_t AS7341_I2C_ADDR = 0x39;
 static const uint8_t AS7341_ASTATUS = 0x60;
 static const uint8_t AS7341_CH0_DATA_L = 0x61;
 static const uint8_t AS7341_CH0_DATA_H = 0x62;
-static const uint8_t AS7341_ITIME_L = 0x63;
-static const uint8_t AS7341_ITIME_L = 0x64;
-static const uint8_t AS7341_ITIME_L = 0x65;
+static const uint8_t AS7341_ITIME_L_1 = 0x63;
+static const uint8_t AS7341_ITIME_L_2 = 0x64;
+static const uint8_t AS7341_ITIME_L_3 = 0x65;
 static const uint8_t AS7341_CH1_DATA_L = 0x66;
 static const uint8_t AS7341_CH1_DATA_H = 0x67;
 static const uint8_t AS7341_CH2_DATA_L = 0x68;
@@ -48,7 +48,7 @@ static const uint8_t AS7341_STATUS = 0x93;
 
 class AS7341Component : public PollingComponent, public i2c::I2CDevice {
 
-}
+};
 
 
 } // namespace as7341
