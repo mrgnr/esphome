@@ -63,6 +63,9 @@ static const uint8_t AS7341_CH5_DATA_H = 0xA0;
 
 static const uint8_t AS7341_STATUS2 = 0xA3;
 
+static const uint8_t AS7341_CFG1 = 0xAA; ///< Controls ADC Gain
+
+
 static const uint8_t AS7341_CFG6 = 0xAF;  // Stores SMUX command
 static const uint8_t AS7341_CFG9 = 0xB2;  // Config for system interrupts (SMUX, Flicker detection)
 
@@ -88,22 +91,41 @@ typedef enum {
   AS7341_SMUX_CMD_WRITE, ///< Write SMUX configuration from RAM to SMUX chain
 } as7341_smux_cmd_t;
 
+typedef enum {
+  AS7341_GAIN_0_5X,
+  AS7341_GAIN_1X,
+  AS7341_GAIN_2X,
+  AS7341_GAIN_4X,
+  AS7341_GAIN_8X,
+  AS7341_GAIN_16X,
+  AS7341_GAIN_32X,
+  AS7341_GAIN_64X,
+  AS7341_GAIN_128X,
+  AS7341_GAIN_256X,
+  AS7341_GAIN_512X,
+} as7341_gain_t;
 
 class AS7341Component : public PollingComponent, public i2c::I2CDevice {
     public:
-        AS7341Component() : PollingComponent(5000) {
+        AS7341Component() : PollingComponent(30000) {
             // this->address_ = AS7341_I2C_ADDR;
             // set_i2c_address(AS7341_I2C_ADDR);
             ESP_LOGCONFIG(TAG, "Constructor AS7341...");
             LOG_I2C_DEVICE(this);
         }
 
-        Sensor *s0 = new Sensor();
-        Sensor *s1 = new Sensor();
-        Sensor *s2 = new Sensor();
-        Sensor *s3 = new Sensor();
-        Sensor *s4 = new Sensor();
-        Sensor *s5 = new Sensor();
+        Sensor *f1 = new Sensor();
+        Sensor *f2 = new Sensor();
+        Sensor *f3 = new Sensor();
+        Sensor *f4 = new Sensor();
+        // Sensor *s4 = new Sensor();
+        // Sensor *s5 = new Sensor();
+        Sensor *f5 = new Sensor();
+        Sensor *f6 = new Sensor();
+        Sensor *f7 = new Sensor();
+        Sensor *f8 = new Sensor();
+        Sensor *clear = new Sensor();
+        Sensor *nir = new Sensor();
 
         void setup() override {
             ESP_LOGCONFIG(TAG, "Setting up AS7341...");
@@ -137,12 +159,12 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
 
 
             // Set measurement parameters
-            this->write_byte(AS7341_ATIME, 100);
-
-            uint16_t astep = 999;
-            uint16_t astep_swapped = (astep>>8) | (astep<<8);
-            this->write_byte_16(AS7341_ASTEP, astep_swapped);
-
+            // setGain(AS7341_GAIN_0_5X);
+            setGain(AS7341_GAIN_8X);
+            // setGain(AS7341_GAIN_64X);
+            // setGain(AS7341_GAIN_512X);
+            setATIME(29);
+            setASTEP(599);
         }
         
         float get_setup_priority() const {
@@ -171,25 +193,50 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
             ESP_LOGCONFIG(TAG, "  readChannels: %u", success);
 
             // uint16_t ch0 = readChannel(AS7341_ADC_CHANNEL_0);
-            // uint16_t ch1 = readChannel(AS7341_ADC_CHANNEL_1);
-            // uint16_t ch2 = readChannel(AS7341_ADC_CHANNEL_2);
-            // uint16_t ch3 = readChannel(AS7341_ADC_CHANNEL_3);
+            // uint16_t f2 = readChannel(AS7341_ADC_CHANNEL_1);
+            // uint16_t f3 = readChannel(AS7341_ADC_CHANNEL_2);
+            // uint16_t f4 = readChannel(AS7341_ADC_CHANNEL_3);
             // uint16_t ch4 = readChannel(AS7341_ADC_CHANNEL_4);
             // uint16_t ch5 = readChannel(AS7341_ADC_CHANNEL_5);
 
-            uint16_t ch0 = _channel_readings[0];
-            uint16_t ch1 = _channel_readings[1];
-            uint16_t ch2 = _channel_readings[2];
-            uint16_t ch3 = _channel_readings[3];
-            uint16_t ch4 = _channel_readings[4];
-            uint16_t ch5 = _channel_readings[5];
+            uint16_t f1_ = _channel_readings[0];
+            uint16_t f2_ = _channel_readings[1];
+            uint16_t f3_ = _channel_readings[2];
+            uint16_t f4_ = _channel_readings[3];
+            // uint16_t ch4 = _channel_readings[4];
+            // uint16_t ch5 = _channel_readings[5];
+            uint16_t f5_ = _channel_readings[6];
+            uint16_t f6_ = _channel_readings[7];
+            uint16_t f7_ = _channel_readings[8];
+            uint16_t f8_ = _channel_readings[9];
+            uint16_t clear_ = _channel_readings[10];
+            uint16_t nir_ = _channel_readings[11];
 
-            s0->publish_state(ch0);
-            s1->publish_state(ch1);
-            s2->publish_state(ch2);
-            s3->publish_state(ch3);
-            s4->publish_state(ch4);
-            s5->publish_state(ch5);
+            f1->publish_state(f1_);
+            f2->publish_state(f2_);
+            f3->publish_state(f3_);
+            f4->publish_state(f4_);
+            // s4->publish_state(ch4);
+            // s5->publish_state(ch5);
+            f5->publish_state(f5_);
+            f6->publish_state(f6_);
+            f7->publish_state(f7_);
+            f8->publish_state(f8_);
+            clear->publish_state(clear_);
+            nir->publish_state(nir_);
+        }
+
+        bool setGain(as7341_gain_t gain) {
+            return this->write_byte(AS7341_CFG1, gain);
+        }
+
+        bool setATIME(uint8_t atime) {
+            return this->write_byte(AS7341_ATIME, atime);
+        }
+
+        bool setASTEP(uint16_t astep) {
+            uint16_t astep_swapped = (astep>>8) | (astep<<8);
+            return this->write_byte_16(AS7341_ASTEP, astep_swapped);
         }
 
         uint16_t readChannel(as7341_adc_channel_t channel) {
@@ -206,16 +253,20 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
         bool readChannels(uint16_t *data) {
             setSMUXLowChannels(true);
             enableSpectralMeasurement(true);
-
             waitForData();
+            bool low_success = this->read_bytes_16(AS7341_CH0_DATA_L, data, 6);
 
-            this->read_bytes_16(AS7341_CH0_DATA_L, data, 6);
-            enableSpectralMeasurement(false);
-            return false;
+            setSMUXLowChannels(false);
+            enableSpectralMeasurement(true);
+            waitForData();
+            bool high_sucess = this->read_bytes_16(AS7341_CH0_DATA_L, &data[6], 6);
+
+            return low_success && high_sucess;
+            // return low_success;
         }
 
         void setSMUXLowChannels(bool enable) {
-            ESP_LOGCONFIG(TAG, "Set SMUX low channels");
+            ESP_LOGCONFIG(TAG, "Set SMUX low channels: %u", enable);
             enableSpectralMeasurement(false);
             setSMUXCommand(AS7341_SMUX_CMD_WRITE);
 
@@ -261,30 +312,51 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
         }
 
         void configureSMUXHighChannels() {
-            // TODO
-
+            // SMUX Config for F5,F6,F7,F8,NIR,Clear
+            this->write_byte(0x00, 0x00); // F3 left disable
+            this->write_byte(0x01, 0x00); // F1 left disable
+            this->write_byte(0x02, 0x00); // reserved/disable
+            this->write_byte(0x03, 0x40); // F8 left connected to ADC3
+            this->write_byte(0x04, 0x02); // F6 left connected to ADC1
+            this->write_byte(0x05, 0x00); // F4/ F2 disabled
+            this->write_byte(0x06, 0x10); // F5 left connected to ADC0
+            this->write_byte(0x07, 0x03); // F7 left connected to ADC2
+            this->write_byte(0x08, 0x50); // CLEAR Connected to ADC4
+            this->write_byte(0x09, 0x10); // F5 right connected to ADC0
+            this->write_byte(0x0A, 0x03); // F7 right connected to ADC2
+            this->write_byte(0x0B, 0x00); // Reserved or disabled
+            this->write_byte(0x0C, 0x00); // F2 right disabled
+            this->write_byte(0x0D, 0x00); // F4 right disabled
+            this->write_byte(0x0E, 0x24); // F8 right connected to ADC2/ F6 right connected to ADC1
+            this->write_byte(0x0F, 0x00); // F3 right disabled
+            this->write_byte(0x10, 0x00); // F1 right disabled
+            this->write_byte(0x11, 0x50); // CLEAR right connected to AD4
+            this->write_byte(0x12, 0x00); // Reserved or disabled
+            this->write_byte(0x13, 0x06); // NIR connected to ADC5
         }
 
         bool enableSmux() {
             ESP_LOGCONFIG(TAG, "Enable SMUX...");
             setRegisterBit(AS7341_ENABLE, 4);
 
-            uint16_t timeout = 10;
+            uint16_t timeout = 100;
             bool success = false;
             for (uint16_t time = 0; time < timeout; time++) {
-                success = readRegisterBit(AS7341_ENABLE, 4);
+                bool smuxen = readRegisterBit(AS7341_ENABLE, 4);
 
-                if (success) {
+                // The SMUXEN bit is cleared once the SMUX operation is finished
+                if (!smuxen) {
                     ESP_LOGCONFIG(TAG, "SMUX enabled!!!");
+                    success = true;
                     break;
                 }
 
                 ESP_LOGCONFIG(TAG, "SMUX delay: %u", time);
 
-                delay(100);
+                delay(10);
             }
 
-            ESP_LOGCONFIG(TAG, "SMUX enabled: %u", success);
+            ESP_LOGCONFIG(TAG, "SMUX enabled success: %u", success);
             return success;
         }
 
@@ -302,12 +374,14 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
                     break;
                 }
 
-                ESP_LOGCONFIG(TAG, "Data delay: %u", time);
+                // TODO
+                // ESP_LOGCONFIG(TAG, "Data delay: %u", time);
 
                 delay(100);
             }
 
-            ESP_LOGCONFIG(TAG, "Data ready: %u", success);
+            // TODO
+            // ESP_LOGCONFIG(TAG, "Data ready: %u", success);
             return success;
         }
 
@@ -331,9 +405,9 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
         bool readRegisterBit(uint8_t address, uint8_t bitPosition) {
             uint8_t data;
             this->read_byte(address, &data);
-            ESP_LOGCONFIG(TAG, "  read_byte: 0x%X", data);
+            // ESP_LOGCONFIG(TAG, "  read_byte: 0x%X", data);
             bool bit = ( data & ( 1 << bitPosition ) ) > 0;
-            ESP_LOGCONFIG(TAG, "  read bit[%u]: 0x%u", bitPosition, bit);
+            // ESP_LOGCONFIG(TAG, "  read bit[%u]: 0x%u", bitPosition, bit);
             return bit;
         }
 
