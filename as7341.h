@@ -118,8 +118,8 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
         Sensor *f2 = new Sensor();
         Sensor *f3 = new Sensor();
         Sensor *f4 = new Sensor();
-        // Sensor *s4 = new Sensor();
-        // Sensor *s5 = new Sensor();
+        // Sensor *clear_ = new Sensor();
+        // Sensor *nir_ = new Sensor();
         Sensor *f5 = new Sensor();
         Sensor *f6 = new Sensor();
         Sensor *f7 = new Sensor();
@@ -216,8 +216,8 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
             f2->publish_state(f2_);
             f3->publish_state(f3_);
             f4->publish_state(f4_);
-            // s4->publish_state(ch4);
-            // s5->publish_state(ch5);
+            // clear_->publish_state(ch4);
+            // nir_->publish_state(ch5);
             f5->publish_state(f5_);
             f6->publish_state(f6_);
             f7->publish_state(f7_);
@@ -342,9 +342,8 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
             uint16_t timeout = 100;
             bool success = false;
             for (uint16_t time = 0; time < timeout; time++) {
-                bool smuxen = readRegisterBit(AS7341_ENABLE, 4);
-
                 // The SMUXEN bit is cleared once the SMUX operation is finished
+                bool smuxen = readRegisterBit(AS7341_ENABLE, 4);
                 if (!smuxen) {
                     ESP_LOGCONFIG(TAG, "SMUX enabled!!!");
                     success = true;
