@@ -145,15 +145,6 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
             uint8_t config;
             this->read_byte(AS7341_CONFIG, &config);
             ESP_LOGCONFIG(TAG, "  Config: 0x%X", config);
-
-
-            // Set measurement parameters
-            // setGain(AS7341_GAIN_0_5X);
-            setGain(AS7341_GAIN_8X);
-            // setGain(AS7341_GAIN_64X);
-            // setGain(AS7341_GAIN_512X);
-            setATIME(29);
-            setASTEP(599);
         }
         
         float get_setup_priority() const {

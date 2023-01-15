@@ -2,6 +2,7 @@ import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import i2c, sensor
 from esphome.const import (
+    CONF_GAIN,
     CONF_ID,
     DEVICE_CLASS_ILLUMINANCE,
     ICON_BRIGHTNESS_5,
@@ -18,6 +19,9 @@ AS7341Component = as7341_ns.class_(
     "AS7341Component", cg.PollingComponent, i2c.I2CDevice
 )
 
+CONF_ATIME = "atime"
+CONF_ASTEP = "astep"
+
 CONF_F1 = "f1"
 CONF_F2 = "f2"
 CONF_F3 = "f3"
@@ -30,6 +34,21 @@ CONF_CLEAR = "clear"
 CONF_NIR = "nir"
 
 UNIT_COUNTS = "#"
+
+AS7341_GAIN = as7341_ns.enum("as7341_gain_t")
+GAIN_OPTIONS = {
+    "X0.5": AS7341_GAIN.AS7341_GAIN_0_5X,
+    "X1": AS7341_GAIN.AS7341_GAIN_1X,
+    "X2": AS7341_GAIN.AS7341_GAIN_2X,
+    "X4": AS7341_GAIN.AS7341_GAIN_4X,
+    "X8": AS7341_GAIN.AS7341_GAIN_8X,
+    "X16": AS7341_GAIN.AS7341_GAIN_16X,
+    "X32": AS7341_GAIN.AS7341_GAIN_32X,
+    "X64": AS7341_GAIN.AS7341_GAIN_64X,
+    "X128": AS7341_GAIN.AS7341_GAIN_128X,
+    "X256": AS7341_GAIN.AS7341_GAIN_256X,
+    "X512": AS7341_GAIN.AS7341_GAIN_512X,
+}
 
 
 def sensor_schema():
@@ -56,6 +75,9 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_F8): sensor_schema(),
             cv.Optional(CONF_CLEAR): sensor_schema(),
             cv.Optional(CONF_NIR): sensor_schema(),
+            cv.Optional(CONF_GAIN, default="X8"): cv.enum(GAIN_OPTIONS),
+            cv.Optional(CONF_ATIME, default=29): cv.int_range(min=0, max=255),
+            cv.Optional(CONF_ASTEP, default=599): cv.int_range(min=0, max=65534),
         }
     )
     .extend(cv.polling_component_schema("60s"))
@@ -80,6 +102,10 @@ async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
     await i2c.register_i2c_device(var, config)
+
+    cg.add(var.setGain(config[CONF_GAIN]))
+    cg.add(var.setATIME(config[CONF_ATIME]))
+    cg.add(var.setASTEP(config[CONF_ASTEP]))
 
     for conf_id, set_sensor_func in SENSORS.items():
         sens = await sensor.new_sensor(config[conf_id])
