@@ -81,16 +81,16 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
   float get_setup_priority() const override;
   void update() override;
 
-  void set_f1_sensor(sensor::Sensor *f1_sensor) { this->f1_ = f1_sensor; }
-  void set_f2_sensor(sensor::Sensor *f2_sensor) { this->f2_ = f2_sensor; }
-  void set_f3_sensor(sensor::Sensor *f3_sensor) { this->f3_ = f3_sensor; }
-  void set_f4_sensor(sensor::Sensor *f4_sensor) { this->f4_ = f4_sensor; }
-  void set_f5_sensor(sensor::Sensor *f5_sensor) { this->f5_ = f5_sensor; }
-  void set_f6_sensor(sensor::Sensor *f6_sensor) { this->f6_ = f6_sensor; }
-  void set_f7_sensor(sensor::Sensor *f7_sensor) { this->f7_ = f7_sensor; }
-  void set_f8_sensor(sensor::Sensor *f8_sensor) { this->f8_ = f8_sensor; }
-  void set_clear_sensor(sensor::Sensor *clear_sensor) { this->clear_ = clear_sensor; }
-  void set_nir_sensor(sensor::Sensor *nir_sensor) { this->nir_ = nir_sensor; }
+  void set_f1_sensor(sensor::Sensor *f1_sensor) { f1_ = f1_sensor; }
+  void set_f2_sensor(sensor::Sensor *f2_sensor) { f2_ = f2_sensor; }
+  void set_f3_sensor(sensor::Sensor *f3_sensor) { f3_ = f3_sensor; }
+  void set_f4_sensor(sensor::Sensor *f4_sensor) { f4_ = f4_sensor; }
+  void set_f5_sensor(sensor::Sensor *f5_sensor) { f5_ = f5_sensor; }
+  void set_f6_sensor(sensor::Sensor *f6_sensor) { f6_ = f6_sensor; }
+  void set_f7_sensor(sensor::Sensor *f7_sensor) { f7_ = f7_sensor; }
+  void set_f8_sensor(sensor::Sensor *f8_sensor) { f8_ = f8_sensor; }
+  void set_clear_sensor(sensor::Sensor *clear_sensor) { clear_ = clear_sensor; }
+  void set_nir_sensor(sensor::Sensor *nir_sensor) { nir_ = nir_sensor; }
 
   void set_gain(as7341_gain_t gain) { gain_ = gain; }
   void set_atime(uint8_t atime) { atime_ = atime; }

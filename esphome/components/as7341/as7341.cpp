@@ -29,9 +29,9 @@ void AS7341Component::setup() {
 
   // Set configuration
   this->write_byte(AS7341_CONFIG, 0x00);
-  setup_atime(atime_);
-  setup_astep(astep_);
-  setup_gain(gain_);
+  this->setup_atime(this->atime_);
+  this->setup_astep(this->astep_);
+  this->setup_gain(this->gain_);
 }
 
 void AS7341Component::dump_config() {
@@ -60,37 +60,37 @@ void AS7341Component::dump_config() {
 float AS7341Component::get_setup_priority() const { return setup_priority::DATA; }
 
 void AS7341Component::update() {
-  read_channels(channel_readings_);
+  read_channels(this->channel_readings_);
 
     if (this->f1_ != nullptr) {
-        f1_->publish_state(channel_readings_[0]);
+        this->f1_->publish_state(this->channel_readings_[0]);
     }
     if (this->f2_ != nullptr) {
-        f2_->publish_state(channel_readings_[1]);
+        this->f2_->publish_state(this->channel_readings_[1]);
     }
     if (this->f3_ != nullptr) {
-        f3_->publish_state(channel_readings_[2]);
+        this->f3_->publish_state(this->channel_readings_[2]);
     }
     if (this->f4_ != nullptr) {
-        f4_->publish_state(channel_readings_[3]);
+        this->f4_->publish_state(this->channel_readings_[3]);
     }
     if (this->f5_ != nullptr) {
-        f5_->publish_state(channel_readings_[6]);
+        this->f5_->publish_state(this->channel_readings_[6]);
     }
     if (this->f6_ != nullptr) {
-        f6_->publish_state(channel_readings_[7]);
+        this->f6_->publish_state(this->channel_readings_[7]);
     }
     if (this->f7_ != nullptr) {
-        f7_->publish_state(channel_readings_[8]);
+        this->f7_->publish_state(this->channel_readings_[8]);
     }
     if (this->f8_ != nullptr) {
-        f8_->publish_state(channel_readings_[9]);
+        this->f8_->publish_state(this->channel_readings_[9]);
     }
     if (this->clear_ != nullptr) {
-        clear_->publish_state(channel_readings_[10]);
+        this->clear_->publish_state(this->channel_readings_[10]);
     }
     if (this->nir_ != nullptr) {
-        nir_->publish_state(channel_readings_[11]);
+        this->nir_->publish_state(this->channel_readings_[11]);
     }
 }
 
@@ -109,7 +109,7 @@ uint8_t AS7341Component::get_atime() {
 uint16_t AS7341Component::get_astep() {
   uint16_t data;
   this->read_byte_16(AS7341_ASTEP, &data);
-  return swap_bytes(data);
+  return this->swap_bytes(data);
 }
 
 bool AS7341Component::setup_gain(as7341_gain_t gain) { return this->write_byte(AS7341_CFG1, gain); }
@@ -119,30 +119,30 @@ bool AS7341Component::setup_atime(uint8_t atime) { return this->write_byte(AS734
 bool AS7341Component::setup_astep(uint16_t astep) { return this->write_byte_16(AS7341_ASTEP, swap_bytes(astep)); }
 
 bool AS7341Component::read_channels(uint16_t *data) {
-  set_smux_low_channels(true);
-  enable_spectral_measurement(true);
-  wait_for_data();
+  this->set_smux_low_channels(true);
+  this->enable_spectral_measurement(true);
+  this->wait_for_data();
   bool low_success = this->read_bytes_16(AS7341_CH0_DATA_L, data, 6);
 
-  set_smux_low_channels(false);
-  enable_spectral_measurement(true);
-  wait_for_data();
+  this->set_smux_low_channels(false);
+  this->enable_spectral_measurement(true);
+  this->wait_for_data();
   bool high_sucess = this->read_bytes_16(AS7341_CH0_DATA_L, &data[6], 6);
 
   return low_success && high_sucess;
 }
 
 void AS7341Component::set_smux_low_channels(bool enable) {
-  enable_spectral_measurement(false);
-  set_smux_command(AS7341_SMUX_CMD_WRITE);
+  this->enable_spectral_measurement(false);
+  this->set_smux_command(AS7341_SMUX_CMD_WRITE);
 
   if (enable) {
-    configure_smux_low_channels();
+    this->configure_smux_low_channels();
 
   } else {
-    configure_smux_high_channels();
+    this->configure_smux_high_channels();
   }
-  enable_smux();
+  this->enable_smux();
 }
 
 bool AS7341Component::set_smux_command(as7341_smux_cmd_t command) {
@@ -199,12 +199,12 @@ void AS7341Component::configure_smux_high_channels() {
 }
 
 bool AS7341Component::enable_smux() {
-  set_register_bit(AS7341_ENABLE, 4);
+  this->set_register_bit(AS7341_ENABLE, 4);
 
   uint16_t timeout = 1000;
   for (uint16_t time = 0; time < timeout; time++) {
     // The SMUXEN bit is cleared once the SMUX operation is finished
-    bool smuxen = read_register_bit(AS7341_ENABLE, 4);
+    bool smuxen = this->read_register_bit(AS7341_ENABLE, 4);
     if (!smuxen) {
       return true;
     }
@@ -218,7 +218,7 @@ bool AS7341Component::enable_smux() {
 bool AS7341Component::wait_for_data() {
   uint16_t timeout = 1000;
   for (uint16_t time = 0; time < timeout; time++) {
-    if (is_data_ready()) {
+    if (this->is_data_ready()) {
       return true;
     }
 
@@ -228,11 +228,11 @@ bool AS7341Component::wait_for_data() {
   return false;
 }
 
-bool AS7341Component::is_data_ready() { return read_register_bit(AS7341_STATUS2, 6); }
+bool AS7341Component::is_data_ready() { return this->read_register_bit(AS7341_STATUS2, 6); }
 
-bool AS7341Component::enable_power(bool enable) { return write_register_bit(AS7341_ENABLE, enable, 0); }
+bool AS7341Component::enable_power(bool enable) { return this->write_register_bit(AS7341_ENABLE, enable, 0); }
 
-bool AS7341Component::enable_spectral_measurement(bool enable) { return write_register_bit(AS7341_ENABLE, enable, 1); }
+bool AS7341Component::enable_spectral_measurement(bool enable) { return this->write_register_bit(AS7341_ENABLE, enable, 1); }
 
 bool AS7341Component::read_register_bit(uint8_t address, uint8_t bit_position) {
   uint8_t data;
@@ -243,10 +243,10 @@ bool AS7341Component::read_register_bit(uint8_t address, uint8_t bit_position) {
 
 bool AS7341Component::write_register_bit(uint8_t address, bool value, uint8_t bit_position) {
   if (value) {
-    return set_register_bit(address, bit_position);
+    return this->set_register_bit(address, bit_position);
   }
 
-  return clear_register_bit(address, bit_position);
+  return this->clear_register_bit(address, bit_position);
 }
 
 bool AS7341Component::set_register_bit(uint8_t address, uint8_t bit_position) {
