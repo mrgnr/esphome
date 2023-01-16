@@ -7,25 +7,12 @@
 namespace esphome {
 namespace as7341 {
 
-static const uint8_t AS7341_I2C_ADDR = 0x39;
 static const uint8_t AS7341_CHIP_ID = 0X09;
 
 static const uint8_t AS7341_ASTATUS = 0x60;
-// static const uint8_t AS7341_CH0_DATA_L = 0x61;
-// static const uint8_t AS7341_CH0_DATA_H = 0x62;
 static const uint8_t AS7341_ITIME_L_1 = 0x63;
 static const uint8_t AS7341_ITIME_L_2 = 0x64;
 static const uint8_t AS7341_ITIME_L_3 = 0x65;
-// static const uint8_t AS7341_CH1_DATA_L = 0x66;
-// static const uint8_t AS7341_CH1_DATA_H = 0x67;
-// static const uint8_t AS7341_CH2_DATA_L = 0x68;
-// static const uint8_t AS7341_CH2_DATA_H = 0x69;
-// static const uint8_t AS7341_CH3_DATA_L = 0x6A;
-// static const uint8_t AS7341_CH3_DATA_H = 0x6B;
-// static const uint8_t AS7341_CH4_DATA_L = 0x6C;
-// static const uint8_t AS7341_CH4_DATA_H = 0x6D;
-// static const uint8_t AS7341_CH5_DATA_L = 0x6E;
-// static const uint8_t AS7341_CH5_DATA_H = 0x6F;
 static const uint8_t AS7341_CONFIG = 0x70;
 static const uint8_t AS7341_STAT = 0x71;
 static const uint8_t AS7341_EDGE = 0x72;
@@ -70,8 +57,6 @@ static const uint8_t AS7341_CFG9 = 0xB2;  // Config for system interrupts (SMUX,
 static const uint8_t AS7341_ASTEP = 0xCA;      // LSB
 static const uint8_t AS7341_ASTEP_MSB = 0xCB;  // MSB
 
-static const char *const TAG = "as7341";
-
 typedef enum {
   AS7341_ADC_CHANNEL_0,
   AS7341_ADC_CHANNEL_1,
@@ -103,32 +88,25 @@ typedef enum {
 
 class AS7341Component : public PollingComponent, public i2c::I2CDevice {
  public:
-  AS7341Component() {
-    // this->address_ = AS7341_I2C_ADDR;
-    // set_i2c_address(AS7341_I2C_ADDR);
-    ESP_LOGCONFIG(TAG, "Constructor AS7341...");
-    LOG_I2C_DEVICE(this);
-  }
-
   void setup() override;
   void dump_config() override;
   float get_setup_priority() const override;
   void update() override;
 
-  void set_f1_sensor(sensor::Sensor *f1_sensor) { this->f1 = f1_sensor; }
-  void set_f2_sensor(sensor::Sensor *f2_sensor) { this->f2 = f2_sensor; }
-  void set_f3_sensor(sensor::Sensor *f3_sensor) { this->f3 = f3_sensor; }
-  void set_f4_sensor(sensor::Sensor *f4_sensor) { this->f4 = f4_sensor; }
-  void set_f5_sensor(sensor::Sensor *f5_sensor) { this->f5 = f5_sensor; }
-  void set_f6_sensor(sensor::Sensor *f6_sensor) { this->f6 = f6_sensor; }
-  void set_f7_sensor(sensor::Sensor *f7_sensor) { this->f7 = f7_sensor; }
-  void set_f8_sensor(sensor::Sensor *f8_sensor) { this->f8 = f8_sensor; }
-  void set_clear_sensor(sensor::Sensor *clear_sensor) { this->clear = clear_sensor; }
-  void set_nir_sensor(sensor::Sensor *nir_sensor) { this->nir = nir_sensor; }
+  void set_f1_sensor(sensor::Sensor *f1_sensor) { this->f1_ = f1_sensor; }
+  void set_f2_sensor(sensor::Sensor *f2_sensor) { this->f2_ = f2_sensor; }
+  void set_f3_sensor(sensor::Sensor *f3_sensor) { this->f3_ = f3_sensor; }
+  void set_f4_sensor(sensor::Sensor *f4_sensor) { this->f4_ = f4_sensor; }
+  void set_f5_sensor(sensor::Sensor *f5_sensor) { this->f5_ = f5_sensor; }
+  void set_f6_sensor(sensor::Sensor *f6_sensor) { this->f6_ = f6_sensor; }
+  void set_f7_sensor(sensor::Sensor *f7_sensor) { this->f7_ = f7_sensor; }
+  void set_f8_sensor(sensor::Sensor *f8_sensor) { this->f8_ = f8_sensor; }
+  void set_clear_sensor(sensor::Sensor *clear_sensor) { this->clear_ = clear_sensor; }
+  void set_nir_sensor(sensor::Sensor *nir_sensor) { this->nir_ = nir_sensor; }
 
-  void set_gain(as7341_gain_t gain) { _gain = gain; }
-  void set_atime(uint8_t atime) { _atime = atime; }
-  void set_astep(uint16_t astep) { _astep = astep; }
+  void set_gain(as7341_gain_t gain) { gain_ = gain; }
+  void set_atime(uint8_t atime) { atime_ = atime; }
+  void set_astep(uint16_t astep) { astep_ = astep; }
 
   as7341_gain_t get_gain();
   uint8_t get_atime();
@@ -157,35 +135,21 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
   uint16_t swap_bytes(uint16_t data);
 
  protected:
-  sensor::Sensor *f1{nullptr};
-  sensor::Sensor *f2{nullptr};
-  sensor::Sensor *f3{nullptr};
-  sensor::Sensor *f4{nullptr};
-  // sensor::Sensor *clear_{nullptr};
-  // sensor::Sensor *nir_{nullptr};
-  sensor::Sensor *f5{nullptr};
-  sensor::Sensor *f6{nullptr};
-  sensor::Sensor *f7{nullptr};
-  sensor::Sensor *f8{nullptr};
-  sensor::Sensor *clear{nullptr};
-  sensor::Sensor *nir{nullptr};
+  sensor::Sensor *f1_{nullptr};
+  sensor::Sensor *f2_{nullptr};
+  sensor::Sensor *f3_{nullptr};
+  sensor::Sensor *f4_{nullptr};
+  sensor::Sensor *f5_{nullptr};
+  sensor::Sensor *f6_{nullptr};
+  sensor::Sensor *f7_{nullptr};
+  sensor::Sensor *f8_{nullptr};
+  sensor::Sensor *clear_{nullptr};
+  sensor::Sensor *nir_{nullptr};
 
-  // sensor::Sensor *f1 = new sensor::Sensor();
-  // sensor::Sensor *f2 = new sensor::Sensor();
-  // sensor::Sensor *f3 = new sensor::Sensor();
-  // sensor::Sensor *f4 = new sensor::Sensor();
-  // // sensor::Sensor *clear_ = new sensor::Sensor();
-  // // sensor::Sensor *nir_ = new sensor::Sensor();
-  // sensor::Sensor *f5 = new sensor::Sensor();
-  // sensor::Sensor *f6 = new sensor::Sensor();
-  // sensor::Sensor *f7 = new sensor::Sensor();
-  // sensor::Sensor *f8 = new sensor::Sensor();
-  // sensor::Sensor *clear = new sensor::Sensor();
-  // sensor::Sensor *nir = new sensor::Sensor();
-  uint16_t _astep;
-  as7341_gain_t _gain;
-  uint8_t _atime;
-  uint16_t _channel_readings[12];
+  uint16_t astep_;
+  as7341_gain_t gain_;
+  uint8_t atime_;
+  uint16_t channel_readings_[12];
 };
 
 }  // namespace as7341

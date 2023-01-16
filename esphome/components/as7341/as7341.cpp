@@ -5,14 +5,10 @@
 namespace esphome {
 namespace as7341 {
 
-// static const char *const TAG = "as7341";
+static const char *const TAG = "as7341";
 
 void AS7341Component::setup() {
   ESP_LOGCONFIG(TAG, "Setting up AS7341...");
-
-  // this->address_ = AS7341_I2C_ADDR;
-  // set_i2c_address(AS7341_I2C_ADDR);
-  // ESP_LOGCONFIG(TAG, "Set address AS7341...");
   LOG_I2C_DEVICE(this);
 
   // Verify device ID
@@ -24,76 +20,61 @@ void AS7341Component::setup() {
     return;
   }
 
-  ESP_LOGCONFIG(TAG, "  Power on...");
   // Power on (enter IDLE state)
   if (!this->enable_power(true)) {
-    ESP_LOGCONFIG(TAG, "  Power on failed!!!");
+    ESP_LOGE(TAG, "  Power on failed!");
     this->mark_failed();
     return;
   }
-  ESP_LOGCONFIG(TAG, "  Power on success");
 
   // Set configuration
   this->write_byte(AS7341_CONFIG, 0x00);
   uint8_t config;
   this->read_byte(AS7341_CONFIG, &config);
-  ESP_LOGCONFIG(TAG, "  Config: 0x%X", config);
 
-  ESP_LOGCONFIG(TAG, "  Setup gain atime astep");
-  bool atime_success = setup_atime(_atime);
-  bool astep_success = setup_astep(_astep);
-  bool gain_success = setup_gain(_gain);
-
-  ESP_LOGCONFIG(TAG, "    atime_success: %u", atime_success);
-  ESP_LOGCONFIG(TAG, "    astep_success: %u", astep_success);
-  ESP_LOGCONFIG(TAG, "    gain_success: %u", gain_success);
+  setup_atime(atime_);
+  setup_astep(astep_);
+  setup_gain(gain_);
 }
 
 void AS7341Component::dump_config() {
   ESP_LOGCONFIG(TAG, "AS7341:");
   LOG_I2C_DEVICE(this);
+  if (this->is_failed()) {
+    ESP_LOGE(TAG, "Communication with AS7341 failed!");
+  }
   LOG_UPDATE_INTERVAL(this);
   ESP_LOGCONFIG(TAG, "  Gain: %u", get_gain());
   ESP_LOGCONFIG(TAG, "  ATIME: %u", get_atime());
   ESP_LOGCONFIG(TAG, "  ASTEP: %u", get_astep());
+
+  LOG_SENSOR("  ", "F1", this->f1_);
+  LOG_SENSOR("  ", "F2", this->f2_);
+  LOG_SENSOR("  ", "F3", this->f3_);
+  LOG_SENSOR("  ", "F4", this->f4_);
+  LOG_SENSOR("  ", "F5", this->f5_);
+  LOG_SENSOR("  ", "F6", this->f6_);
+  LOG_SENSOR("  ", "F7", this->f7_);
+  LOG_SENSOR("  ", "F8", this->f8_);
+  LOG_SENSOR("  ", "Clear", this->clear_);
+  LOG_SENSOR("  ", "NIR", this->nir_);
 }
 
 float AS7341Component::get_setup_priority() const { return setup_priority::DATA; }
 
 void AS7341Component::update() {
-  ESP_LOGCONFIG(TAG, "Update AS7341...");
-  LOG_I2C_DEVICE(this);
+  read_channels(channel_readings_);
 
-  uint8_t config;
-  this->read_byte(AS7341_CONFIG, &config);
-  ESP_LOGCONFIG(TAG, "  Config: 0x%X", config);
-
-  ESP_LOGCONFIG(TAG, "  Gain: %u", get_gain());
-  ESP_LOGCONFIG(TAG, "  ATIME: %u", get_atime());
-  ESP_LOGCONFIG(TAG, "  ASTEP: %u", get_astep());
-
-  bool success = read_channels(_channel_readings);
-  // ESP_LOGCONFIG(TAG, "  read_channels: %u", success);
-
-  // uint16_t ch0 = read_channel(AS7341_ADC_CHANNEL_0);
-  // uint16_t f2 = read_channel(AS7341_ADC_CHANNEL_1);
-  // uint16_t f3 = read_channel(AS7341_ADC_CHANNEL_2);
-  // uint16_t f4 = read_channel(AS7341_ADC_CHANNEL_3);
-  // uint16_t ch4 = read_channel(AS7341_ADC_CHANNEL_4);
-  // uint16_t ch5 = read_channel(AS7341_ADC_CHANNEL_5);
-
-  f1->publish_state(_channel_readings[0]);
-  f2->publish_state(_channel_readings[1]);
-  f3->publish_state(_channel_readings[2]);
-  f4->publish_state(_channel_readings[3]);
-  // clear_->publish_state(ch4);
-  // nir_->publish_state(ch5);
-  f5->publish_state(_channel_readings[6]);
-  f6->publish_state(_channel_readings[7]);
-  f7->publish_state(_channel_readings[8]);
-  f8->publish_state(_channel_readings[9]);
-  clear->publish_state(_channel_readings[10]);
-  nir->publish_state(_channel_readings[11]);
+  f1_->publish_state(channel_readings_[0]);
+  f2_->publish_state(channel_readings_[1]);
+  f3_->publish_state(channel_readings_[2]);
+  f4_->publish_state(channel_readings_[3]);
+  f5_->publish_state(channel_readings_[6]);
+  f6_->publish_state(channel_readings_[7]);
+  f7_->publish_state(channel_readings_[8]);
+  f8_->publish_state(channel_readings_[9]);
+  clear_->publish_state(channel_readings_[10]);
+  nir_->publish_state(channel_readings_[11]);
 }
 
 as7341_gain_t AS7341Component::get_gain() {
@@ -111,35 +92,14 @@ uint8_t AS7341Component::get_atime() {
 uint16_t AS7341Component::get_astep() {
   uint16_t data;
   this->read_byte_16(AS7341_ASTEP, &data);
-  return (data >> 8) | (data << 8);
-}
-
-bool AS7341Component::setup_gain(as7341_gain_t gain) {
-  ESP_LOGCONFIG(TAG, "!!!! Gain: 0x%X", gain);
-  return this->write_byte(AS7341_CFG1, gain);
-}
-
-bool AS7341Component::setup_atime(uint8_t atime) {
-  ESP_LOGCONFIG(TAG, "!!!! ATIME: 0x%X", atime);
-  return this->write_byte(AS7341_ATIME, atime);
-}
-
-bool AS7341Component::setup_astep(uint16_t astep) {
-  ESP_LOGCONFIG(TAG, "!!!! ASTEP: 0x%X", astep);
-  uint16_t astep_swapped = (astep >> 8) | (astep << 8);
-  return this->write_byte_16(AS7341_ASTEP, astep_swapped);
-}
-
-uint16_t AS7341Component::read_channel(as7341_adc_channel_t channel) {
-  enable_spectral_measurement(true);
-
-  uint16_t data;
-  this->read_byte_16(AS7341_CH0_DATA_L + 2 * channel, &data);
-
-  // enable_spectral_measurement(false);
-
   return swap_bytes(data);
 }
+
+bool AS7341Component::setup_gain(as7341_gain_t gain) { return this->write_byte(AS7341_CFG1, gain); }
+
+bool AS7341Component::setup_atime(uint8_t atime) { return this->write_byte(AS7341_ATIME, atime); }
+
+bool AS7341Component::setup_astep(uint16_t astep) { return this->write_byte_16(AS7341_ASTEP, swap_bytes(astep)); }
 
 bool AS7341Component::read_channels(uint16_t *data) {
   set_smux_low_channels(true);
@@ -153,11 +113,9 @@ bool AS7341Component::read_channels(uint16_t *data) {
   bool high_sucess = this->read_bytes_16(AS7341_CH0_DATA_L, &data[6], 6);
 
   return low_success && high_sucess;
-  // return low_success;
 }
 
 void AS7341Component::set_smux_low_channels(bool enable) {
-  // ESP_LOGCONFIG(TAG, "Set SMUX low channels: %u", enable);
   enable_spectral_measurement(false);
   set_smux_command(AS7341_SMUX_CMD_WRITE);
 
@@ -172,12 +130,10 @@ void AS7341Component::set_smux_low_channels(bool enable) {
 
 bool AS7341Component::set_smux_command(as7341_smux_cmd_t command) {
   uint8_t data = command << 3;  // Write to bits 4:3 of the register
-  ESP_LOGCONFIG(TAG, "Set MUX Command: 0x%X", data);
   return this->write_byte(AS7341_CFG6, data);
 }
 
 void AS7341Component::configure_smux_low_channels() {
-  ESP_LOGCONFIG(TAG, "Configure SMUX low channels");
   // SMUX Config for F1,F2,F3,F4,NIR,Clear
   this->write_byte(0x00, 0x30);  // F3 left set to ADC2
   this->write_byte(0x01, 0x01);  // F1 left set to ADC0
@@ -226,62 +182,36 @@ void AS7341Component::configure_smux_high_channels() {
 }
 
 bool AS7341Component::enable_smux() {
-  ESP_LOGCONFIG(TAG, "Enable SMUX...");
   set_register_bit(AS7341_ENABLE, 4);
 
   uint16_t timeout = 1000;
-  bool success = false;
   for (uint16_t time = 0; time < timeout; time++) {
     // The SMUXEN bit is cleared once the SMUX operation is finished
     bool smuxen = read_register_bit(AS7341_ENABLE, 4);
     if (!smuxen) {
-      ESP_LOGCONFIG(TAG, "SMUX enabled!!!");
-      success = true;
-      break;
+      return true;
     }
-
-    ESP_LOGCONFIG(TAG, "SMUX delay: %u", time);
 
     delay(1);
   }
 
-  ESP_LOGCONFIG(TAG, "SMUX enabled success: %u", success);
-  return success;
+  return false;
 }
 
 bool AS7341Component::wait_for_data() {
-  // TODO
-  ESP_LOGCONFIG(TAG, "Wait for data...");
-
   uint16_t timeout = 1000;
-  bool success = false;
   for (uint16_t time = 0; time < timeout; time++) {
-    success = is_data_ready();
-
-    if (success) {
-      ESP_LOGCONFIG(TAG, "Data is ready!!!");
-      break;
+    if (is_data_ready()) {
+      return true;
     }
-
-    // TODO
-    ESP_LOGCONFIG(TAG, "Data delay: %u", time);
 
     delay(1);
   }
 
-  // TODO
-  ESP_LOGCONFIG(TAG, "Data ready: %u", success);
-  return success;
+  return false;
 }
 
-bool AS7341Component::is_data_ready() {
-  // uint8_t status;
-  // this->read_byte(AS7341_STATUS, &status);
-  // bool success = read_register_bit(AS7341_STATUS2, 6);
-  bool success = read_register_bit(AS7341_STATUS2, 6);
-  // ESP_LOGCONFIG(TAG, "Is data ready?: %u", success);
-  return success;
-}
+bool AS7341Component::is_data_ready() { return read_register_bit(AS7341_STATUS2, 6); }
 
 bool AS7341Component::enable_power(bool enable) { return write_register_bit(AS7341_ENABLE, enable, 0); }
 
@@ -290,9 +220,7 @@ bool AS7341Component::enable_spectral_measurement(bool enable) { return write_re
 bool AS7341Component::read_register_bit(uint8_t address, uint8_t bit_position) {
   uint8_t data;
   this->read_byte(address, &data);
-  // ESP_LOGCONFIG(TAG, "  read_byte: 0x%X", data);
   bool bit = (data & (1 << bit_position)) > 0;
-  // ESP_LOGCONFIG(TAG, "  read bit[%u]: 0x%u", bit_position, bit);
   return bit;
 }
 
