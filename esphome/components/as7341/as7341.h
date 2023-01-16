@@ -9,25 +9,13 @@ namespace as7341 {
 
 static const uint8_t AS7341_CHIP_ID = 0X09;
 
-static const uint8_t AS7341_ASTATUS = 0x60;
-static const uint8_t AS7341_ITIME_L_1 = 0x63;
-static const uint8_t AS7341_ITIME_L_2 = 0x64;
-static const uint8_t AS7341_ITIME_L_3 = 0x65;
 static const uint8_t AS7341_CONFIG = 0x70;
-static const uint8_t AS7341_STAT = 0x71;
-static const uint8_t AS7341_EDGE = 0x72;
-static const uint8_t AS7341_GPIO = 0x73;
 static const uint8_t AS7341_LED = 0x74;
 
 static const uint8_t AS7341_ENABLE = 0x80;
 static const uint8_t AS7341_ATIME = 0x81;
 
 static const uint8_t AS7341_WTIME = 0x83;
-
-static const uint8_t AS7341_SP_TH_L_LSB = 0x84;
-static const uint8_t AS7341_SP_TH_L_MSB = 0x85;
-static const uint8_t AS7341_SP_TH_H_LSB = 0x86;
-static const uint8_t AS7341_SP_TH_H_MSB = 0x87;
 
 static const uint8_t AS7341_AUXID = 0x90;
 static const uint8_t AS7341_REVID = 0x91;
