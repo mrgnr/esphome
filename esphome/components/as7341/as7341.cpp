@@ -29,9 +29,6 @@ void AS7341Component::setup() {
 
   // Set configuration
   this->write_byte(AS7341_CONFIG, 0x00);
-  uint8_t config;
-  this->read_byte(AS7341_CONFIG, &config);
-
   setup_atime(atime_);
   setup_astep(astep_);
   setup_gain(gain_);
