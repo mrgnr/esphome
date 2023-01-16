@@ -62,15 +62,12 @@ static const uint8_t AS7341_CH5_DATA_H = 0xA0;
 
 static const uint8_t AS7341_STATUS2 = 0xA3;
 
-static const uint8_t AS7341_CFG1 = 0xAA; ///< Controls ADC Gain
-
+static const uint8_t AS7341_CFG1 = 0xAA;  ///< Controls ADC Gain
 
 static const uint8_t AS7341_CFG6 = 0xAF;  // Stores SMUX command
 static const uint8_t AS7341_CFG9 = 0xB2;  // Config for system interrupts (SMUX, Flicker detection)
 
-
-
-static const uint8_t AS7341_ASTEP = 0xCA;  // LSB
+static const uint8_t AS7341_ASTEP = 0xCA;      // LSB
 static const uint8_t AS7341_ASTEP_MSB = 0xCB;  // MSB
 
 static const char *const TAG = "as7341";
@@ -85,9 +82,9 @@ typedef enum {
 } as7341_adc_channel_t;
 
 typedef enum {
-  AS7341_SMUX_CMD_ROM_RESET, ///< ROM code initialization of SMUX
-  AS7341_SMUX_CMD_READ,      ///< Read SMUX configuration to RAM from SMUX chain
-  AS7341_SMUX_CMD_WRITE, ///< Write SMUX configuration from RAM to SMUX chain
+  AS7341_SMUX_CMD_ROM_RESET,  ///< ROM code initialization of SMUX
+  AS7341_SMUX_CMD_READ,       ///< Read SMUX configuration to RAM from SMUX chain
+  AS7341_SMUX_CMD_WRITE,      ///< Write SMUX configuration from RAM to SMUX chain
 } as7341_smux_cmd_t;
 
 typedef enum {
@@ -105,411 +102,91 @@ typedef enum {
 } as7341_gain_t;
 
 class AS7341Component : public PollingComponent, public i2c::I2CDevice {
-    public:
-        AS7341Component() {
-            // this->address_ = AS7341_I2C_ADDR;
-            // set_i2c_address(AS7341_I2C_ADDR);
-            ESP_LOGCONFIG(TAG, "Constructor AS7341...");
-            LOG_I2C_DEVICE(this);
-        }
-
-
-
-
-        void setup() override {
-            ESP_LOGCONFIG(TAG, "Setting up AS7341...");
-            
-            // this->address_ = AS7341_I2C_ADDR;
-            // set_i2c_address(AS7341_I2C_ADDR);
-            // ESP_LOGCONFIG(TAG, "Set address AS7341...");
-            LOG_I2C_DEVICE(this);
-
-
-            // Verify device ID
-            uint8_t id;
-            this->read_byte(AS7341_ID, &id);
-            ESP_LOGCONFIG(TAG, "  Read ID: 0x%X", id);
-            if ((id & 0xFC ) != (AS7341_CHIP_ID<<2)) {
-                this->mark_failed();
-                return;
-            }
-
-            ESP_LOGCONFIG(TAG, "  Power on...");
-            // Power on (enter IDLE state)
-            if (!this->enablePower(true)) {
-                ESP_LOGCONFIG(TAG, "  Power on failed!!!");
-                this->mark_failed();
-                return;
-            }
-            ESP_LOGCONFIG(TAG, "  Power on success");
-
-            // Set configuration
-            this->write_byte(AS7341_CONFIG, 0x00);
-            uint8_t config;
-            this->read_byte(AS7341_CONFIG, &config);
-            ESP_LOGCONFIG(TAG, "  Config: 0x%X", config);
-
-            ESP_LOGCONFIG(TAG, "  Setup gain atime astep");
-            bool atime_success =  setupATIME(_atime);
-            bool astep_success = setupASTEP(_astep);
-            bool gain_success = setupGain(_gain);
-
-
-            ESP_LOGCONFIG(TAG, "    atime_success: %u", atime_success);
-            ESP_LOGCONFIG(TAG, "    astep_success: %u", astep_success);
-            ESP_LOGCONFIG(TAG, "    gain_success: %u", gain_success);
-        }
-        
-        float get_setup_priority() const {
-            return setup_priority::DATA;
-        }
-
-        void dump_config() override {
-            ESP_LOGCONFIG(TAG, "AS7341:");
-            LOG_I2C_DEVICE(this);
-            LOG_UPDATE_INTERVAL(this);
-            ESP_LOGCONFIG(TAG, "  Gain: %u", getGain());
-            ESP_LOGCONFIG(TAG, "  ATIME: %u", getATIME());
-            ESP_LOGCONFIG(TAG, "  ASTEP: %u", getASTEP());
-        }
-
-        void update() override {
-            ESP_LOGCONFIG(TAG, "Update AS7341...");
-            LOG_I2C_DEVICE(this);
-
-            uint8_t config;
-            this->read_byte(AS7341_CONFIG, &config);
-            ESP_LOGCONFIG(TAG, "  Config: 0x%X", config);
-
-            ESP_LOGCONFIG(TAG, "  Gain: %u", getGain());
-            ESP_LOGCONFIG(TAG, "  ATIME: %u", getATIME());
-            ESP_LOGCONFIG(TAG, "  ASTEP: %u", getASTEP());
-
-
-            bool success = readChannels(_channel_readings);
-            // ESP_LOGCONFIG(TAG, "  readChannels: %u", success);
-
-            // uint16_t ch0 = readChannel(AS7341_ADC_CHANNEL_0);
-            // uint16_t f2 = readChannel(AS7341_ADC_CHANNEL_1);
-            // uint16_t f3 = readChannel(AS7341_ADC_CHANNEL_2);
-            // uint16_t f4 = readChannel(AS7341_ADC_CHANNEL_3);
-            // uint16_t ch4 = readChannel(AS7341_ADC_CHANNEL_4);
-            // uint16_t ch5 = readChannel(AS7341_ADC_CHANNEL_5);
-
-            uint16_t f1_ = _channel_readings[0];
-            uint16_t f2_ = _channel_readings[1];
-            uint16_t f3_ = _channel_readings[2];
-            uint16_t f4_ = _channel_readings[3];
-            // uint16_t ch4 = _channel_readings[4];
-            // uint16_t ch5 = _channel_readings[5];
-            uint16_t f5_ = _channel_readings[6];
-            uint16_t f6_ = _channel_readings[7];
-            uint16_t f7_ = _channel_readings[8];
-            uint16_t f8_ = _channel_readings[9];
-            uint16_t clear_ = _channel_readings[10];
-            uint16_t nir_ = _channel_readings[11];
-
-            f1->publish_state(f1_);
-            f2->publish_state(f2_);
-            f3->publish_state(f3_);
-            f4->publish_state(f4_);
-            // clear_->publish_state(ch4);
-            // nir_->publish_state(ch5);
-            f5->publish_state(f5_);
-            f6->publish_state(f6_);
-            f7->publish_state(f7_);
-            f8->publish_state(f8_);
-            clear->publish_state(clear_);
-            nir->publish_state(nir_);
-        }
-
-        void set_f1_sensor(sensor::Sensor *f1_sensor) { this->f1 = f1_sensor; }
-        void set_f2_sensor(sensor::Sensor *f2_sensor) { this->f2 = f2_sensor; }
-        void set_f3_sensor(sensor::Sensor *f3_sensor) { this->f3 = f3_sensor; }
-        void set_f4_sensor(sensor::Sensor *f4_sensor) { this->f4 = f4_sensor; }
-        void set_f5_sensor(sensor::Sensor *f5_sensor) { this->f5 = f5_sensor; }
-        void set_f6_sensor(sensor::Sensor *f6_sensor) { this->f6 = f6_sensor; }
-        void set_f7_sensor(sensor::Sensor *f7_sensor) { this->f7 = f7_sensor; }
-        void set_f8_sensor(sensor::Sensor *f8_sensor) { this->f8 = f8_sensor; }
-        void set_clear_sensor(sensor::Sensor *clear_sensor) { this->clear = clear_sensor; }
-        void set_nir_sensor(sensor::Sensor *nir_sensor) { this->nir = nir_sensor; }
-
-
-        void setGain(as7341_gain_t gain) {
-            _gain = gain;
-        }
-
-        void setATIME(uint8_t atime) {
-            _atime = atime;
-        }
-
-        void setASTEP(uint16_t astep) {
-            _astep = astep;
-        }
-
-        as7341_gain_t getGain() {
-            uint8_t data;
-            this->read_byte(AS7341_CFG1, &data);
-            return (as7341_gain_t)data;
-        }
-
-        uint8_t getATIME() {
-            uint8_t data;
-            this->read_byte(AS7341_ATIME, &data);
-            return data;
-        }
-
-        uint16_t getASTEP() {
-            uint16_t data;
-            this->read_byte_16(AS7341_ASTEP, &data);
-            return (data>>8) | (data<<8);
-        }
-
-        bool setupGain(as7341_gain_t gain) {
-            ESP_LOGCONFIG(TAG, "!!!! Gain: 0x%X", gain);
-            return this->write_byte(AS7341_CFG1, gain);
-        }
-
-        bool setupATIME(uint8_t atime) {
-            ESP_LOGCONFIG(TAG, "!!!! ATIME: 0x%X", atime);
-            return this->write_byte(AS7341_ATIME, atime);
-        }
-
-        bool setupASTEP(uint16_t astep) {
-            ESP_LOGCONFIG(TAG, "!!!! ASTEP: 0x%X", astep);
-            uint16_t astep_swapped = (astep>>8) | (astep<<8);
-            return this->write_byte_16(AS7341_ASTEP, astep_swapped);
-        }
-
-        uint16_t readChannel(as7341_adc_channel_t channel) {
-            enableSpectralMeasurement(true);
-
-            uint16_t data;
-            this->read_byte_16(AS7341_CH0_DATA_L + 2*channel, &data);
-
-            // enableSpectralMeasurement(false);
-
-            return swapBytes(data);
-        }
-
-        bool readChannels(uint16_t *data) {
-            setSMUXLowChannels(true);
-            enableSpectralMeasurement(true);
-            waitForData();
-            bool low_success = this->read_bytes_16(AS7341_CH0_DATA_L, data, 6);
-
-            setSMUXLowChannels(false);
-            enableSpectralMeasurement(true);
-            waitForData();
-            bool high_sucess = this->read_bytes_16(AS7341_CH0_DATA_L, &data[6], 6);
-
-            return low_success && high_sucess;
-            // return low_success;
-        }
-
-        void setSMUXLowChannels(bool enable) {
-            // ESP_LOGCONFIG(TAG, "Set SMUX low channels: %u", enable);
-            enableSpectralMeasurement(false);
-            setSMUXCommand(AS7341_SMUX_CMD_WRITE);
-
-            if (enable) {
-                configureSMUXLowChannels();
-
-            } else {
-                configureSMUXHighChannels();
-
-            }
-            enableSmux();
-        }
-
-        bool setSMUXCommand(as7341_smux_cmd_t command) {
-            uint8_t data = command << 3;  // Write to bits 4:3 of the register
-            ESP_LOGCONFIG(TAG, "Set MUX Command: 0x%X", data);
-            return this->write_byte(AS7341_CFG6, data);
-        }
-
-        void configureSMUXLowChannels() {
-            ESP_LOGCONFIG(TAG, "Configure SMUX low channels");
-            // SMUX Config for F1,F2,F3,F4,NIR,Clear
-            this->write_byte(0x00, 0x30); // F3 left set to ADC2
-            this->write_byte(0x01, 0x01); // F1 left set to ADC0
-            this->write_byte(0x02, 0x00); // Reserved or disabled
-            this->write_byte(0x03, 0x00); // F8 left disabled
-            this->write_byte(0x04, 0x00); // F6 left disabled
-            this->write_byte(0x05, 0x42); // F4 left connected to ADC3/f2 left connected to ADC1
-            this->write_byte(0x06, 0x00); // F5 left disbled
-            this->write_byte(0x07, 0x00); // F7 left disbled
-            this->write_byte(0x08, 0x50); // CLEAR connected to ADC4
-            this->write_byte(0x09, 0x00); // F5 right disabled
-            this->write_byte(0x0A, 0x00); // F7 right disabled
-            this->write_byte(0x0B, 0x00); // Reserved or disabled
-            this->write_byte(0x0C, 0x20); // F2 right connected to ADC1
-            this->write_byte(0x0D, 0x04); // F4 right connected to ADC3
-            this->write_byte(0x0E, 0x00); // F6/F8 right disabled
-            this->write_byte(0x0F, 0x30); // F3 right connected to AD2
-            this->write_byte(0x10, 0x01); // F1 right connected to AD0
-            this->write_byte(0x11, 0x50); // CLEAR right connected to AD4
-            this->write_byte(0x12, 0x00); // Reserved or disabled
-            this->write_byte(0x13, 0x06); // NIR connected to ADC5
-        }
-
-        void configureSMUXHighChannels() {
-            // SMUX Config for F5,F6,F7,F8,NIR,Clear
-            this->write_byte(0x00, 0x00); // F3 left disable
-            this->write_byte(0x01, 0x00); // F1 left disable
-            this->write_byte(0x02, 0x00); // reserved/disable
-            this->write_byte(0x03, 0x40); // F8 left connected to ADC3
-            this->write_byte(0x04, 0x02); // F6 left connected to ADC1
-            this->write_byte(0x05, 0x00); // F4/ F2 disabled
-            this->write_byte(0x06, 0x10); // F5 left connected to ADC0
-            this->write_byte(0x07, 0x03); // F7 left connected to ADC2
-            this->write_byte(0x08, 0x50); // CLEAR Connected to ADC4
-            this->write_byte(0x09, 0x10); // F5 right connected to ADC0
-            this->write_byte(0x0A, 0x03); // F7 right connected to ADC2
-            this->write_byte(0x0B, 0x00); // Reserved or disabled
-            this->write_byte(0x0C, 0x00); // F2 right disabled
-            this->write_byte(0x0D, 0x00); // F4 right disabled
-            this->write_byte(0x0E, 0x24); // F8 right connected to ADC2/ F6 right connected to ADC1
-            this->write_byte(0x0F, 0x00); // F3 right disabled
-            this->write_byte(0x10, 0x00); // F1 right disabled
-            this->write_byte(0x11, 0x50); // CLEAR right connected to AD4
-            this->write_byte(0x12, 0x00); // Reserved or disabled
-            this->write_byte(0x13, 0x06); // NIR connected to ADC5
-        }
-
-        bool enableSmux() {
-            ESP_LOGCONFIG(TAG, "Enable SMUX...");
-            setRegisterBit(AS7341_ENABLE, 4);
-
-            uint16_t timeout = 100;
-            bool success = false;
-            for (uint16_t time = 0; time < timeout; time++) {
-                // The SMUXEN bit is cleared once the SMUX operation is finished
-                bool smuxen = readRegisterBit(AS7341_ENABLE, 4);
-                if (!smuxen) {
-                    ESP_LOGCONFIG(TAG, "SMUX enabled!!!");
-                    success = true;
-                    break;
-                }
-
-                // ESP_LOGCONFIG(TAG, "SMUX delay: %u", time);
-
-                delay(10);
-            }
-
-            // ESP_LOGCONFIG(TAG, "SMUX enabled success: %u", success);
-            return success;
-        }
-
-        bool waitForData() {
-            // TODO
-            ESP_LOGCONFIG(TAG, "Wait for data...");
-
-            uint16_t timeout = 10;
-            bool success = false;
-            for (uint16_t time = 0; time < timeout; time++) {
-                success = isDataReady();
-
-                if (success) {
-                    ESP_LOGCONFIG(TAG, "Data is ready!!!");
-                    break;
-                }
-
-                // TODO
-                // ESP_LOGCONFIG(TAG, "Data delay: %u", time);
-
-                delay(100);
-            }
-
-            // TODO
-            // ESP_LOGCONFIG(TAG, "Data ready: %u", success);
-            return success;
-        }
-
-        bool isDataReady() {
-            // uint8_t status;
-            // this->read_byte(AS7341_STATUS, &status);
-            // bool success = readRegisterBit(AS7341_STATUS2, 6);
-            bool success = readRegisterBit(AS7341_STATUS2, 6);
-            // ESP_LOGCONFIG(TAG, "Is data ready?: %u", success);
-            return success;
-        }
-
-        bool enablePower(bool enable) {
-            return writeRegisterBit(AS7341_ENABLE, enable, 0);
-        }
-
-        bool enableSpectralMeasurement(bool enable) {
-            return writeRegisterBit(AS7341_ENABLE, enable, 1);
-        }
-
-        bool readRegisterBit(uint8_t address, uint8_t bitPosition) {
-            uint8_t data;
-            this->read_byte(address, &data);
-            // ESP_LOGCONFIG(TAG, "  read_byte: 0x%X", data);
-            bool bit = ( data & ( 1 << bitPosition ) ) > 0;
-            // ESP_LOGCONFIG(TAG, "  read bit[%u]: 0x%u", bitPosition, bit);
-            return bit;
-        }
-
-        bool writeRegisterBit(uint8_t address, bool value, uint8_t bitPosition) {
-            if (value) { 
-                return setRegisterBit(address, bitPosition);
-            }
-
-            return clearRegisterBit(address, bitPosition);
-        }
-
-        bool setRegisterBit(uint8_t address, uint8_t bitPosition) {
-            uint8_t data;
-            this->read_byte(address, &data);
-            data |= (1 << bitPosition);
-            return this->write_byte(address, data);
-        }
-
-        bool clearRegisterBit(uint8_t address, uint8_t bitPosition) {
-            uint8_t data;
-            this->read_byte(address, &data);
-            data &= ~(1 << bitPosition);
-            return this->write_byte(address, data);
-        }
-
-        uint16_t swapBytes(uint16_t data) {
-            return (data>>8) | (data<<8);
-        }
-    protected:
-        sensor::Sensor *f1{nullptr};
-        sensor::Sensor *f2{nullptr};
-        sensor::Sensor *f3{nullptr};
-        sensor::Sensor *f4{nullptr};
-        // sensor::Sensor *clear_{nullptr};
-        // sensor::Sensor *nir_{nullptr};
-        sensor::Sensor *f5{nullptr};
-        sensor::Sensor *f6{nullptr};
-        sensor::Sensor *f7{nullptr};
-        sensor::Sensor *f8{nullptr};
-        sensor::Sensor *clear{nullptr};
-        sensor::Sensor *nir{nullptr};
-
-        // sensor::Sensor *f1 = new sensor::Sensor();
-        // sensor::Sensor *f2 = new sensor::Sensor();
-        // sensor::Sensor *f3 = new sensor::Sensor();
-        // sensor::Sensor *f4 = new sensor::Sensor();
-        // // sensor::Sensor *clear_ = new sensor::Sensor();
-        // // sensor::Sensor *nir_ = new sensor::Sensor();
-        // sensor::Sensor *f5 = new sensor::Sensor();
-        // sensor::Sensor *f6 = new sensor::Sensor();
-        // sensor::Sensor *f7 = new sensor::Sensor();
-        // sensor::Sensor *f8 = new sensor::Sensor();
-        // sensor::Sensor *clear = new sensor::Sensor();
-        // sensor::Sensor *nir = new sensor::Sensor();
-        uint16_t _astep;
-        as7341_gain_t _gain;
-        uint8_t _atime;
-        uint16_t _channel_readings[12];
-
+ public:
+  AS7341Component() {
+    // this->address_ = AS7341_I2C_ADDR;
+    // set_i2c_address(AS7341_I2C_ADDR);
+    ESP_LOGCONFIG(TAG, "Constructor AS7341...");
+    LOG_I2C_DEVICE(this);
+  }
+
+  void setup() override;
+  void dump_config() override;
+  float get_setup_priority() const override;
+  void update() override;
+
+  void set_f1_sensor(sensor::Sensor *f1_sensor) { this->f1 = f1_sensor; }
+  void set_f2_sensor(sensor::Sensor *f2_sensor) { this->f2 = f2_sensor; }
+  void set_f3_sensor(sensor::Sensor *f3_sensor) { this->f3 = f3_sensor; }
+  void set_f4_sensor(sensor::Sensor *f4_sensor) { this->f4 = f4_sensor; }
+  void set_f5_sensor(sensor::Sensor *f5_sensor) { this->f5 = f5_sensor; }
+  void set_f6_sensor(sensor::Sensor *f6_sensor) { this->f6 = f6_sensor; }
+  void set_f7_sensor(sensor::Sensor *f7_sensor) { this->f7 = f7_sensor; }
+  void set_f8_sensor(sensor::Sensor *f8_sensor) { this->f8 = f8_sensor; }
+  void set_clear_sensor(sensor::Sensor *clear_sensor) { this->clear = clear_sensor; }
+  void set_nir_sensor(sensor::Sensor *nir_sensor) { this->nir = nir_sensor; }
+
+  void setGain(as7341_gain_t gain) { _gain = gain; }
+  void setATIME(uint8_t atime) { _atime = atime; }
+  void setASTEP(uint16_t astep) { _astep = astep; }
+
+  as7341_gain_t getGain();
+  uint8_t getATIME();
+  uint16_t getASTEP();
+  bool setupGain(as7341_gain_t gain);
+  bool setupATIME(uint8_t atime);
+  bool setupASTEP(uint16_t astep);
+
+  uint16_t readChannel(as7341_adc_channel_t channel);
+  bool readChannels(uint16_t *data);
+  void setSMUXLowChannels(bool enable);
+  bool setSMUXCommand(as7341_smux_cmd_t command);
+  void configureSMUXLowChannels();
+  void configureSMUXHighChannels();
+  bool enableSmux();
+
+  bool waitForData();
+  bool isDataReady();
+  bool enablePower(bool enable);
+  bool enableSpectralMeasurement(bool enable);
+
+  bool readRegisterBit(uint8_t address, uint8_t bitPosition);
+  bool writeRegisterBit(uint8_t address, bool value, uint8_t bitPosition);
+  bool setRegisterBit(uint8_t address, uint8_t bitPosition);
+  bool clearRegisterBit(uint8_t address, uint8_t bitPosition);
+  uint16_t swapBytes(uint16_t data);
+
+ protected:
+  sensor::Sensor *f1{nullptr};
+  sensor::Sensor *f2{nullptr};
+  sensor::Sensor *f3{nullptr};
+  sensor::Sensor *f4{nullptr};
+  // sensor::Sensor *clear_{nullptr};
+  // sensor::Sensor *nir_{nullptr};
+  sensor::Sensor *f5{nullptr};
+  sensor::Sensor *f6{nullptr};
+  sensor::Sensor *f7{nullptr};
+  sensor::Sensor *f8{nullptr};
+  sensor::Sensor *clear{nullptr};
+  sensor::Sensor *nir{nullptr};
+
+  // sensor::Sensor *f1 = new sensor::Sensor();
+  // sensor::Sensor *f2 = new sensor::Sensor();
+  // sensor::Sensor *f3 = new sensor::Sensor();
+  // sensor::Sensor *f4 = new sensor::Sensor();
+  // // sensor::Sensor *clear_ = new sensor::Sensor();
+  // // sensor::Sensor *nir_ = new sensor::Sensor();
+  // sensor::Sensor *f5 = new sensor::Sensor();
+  // sensor::Sensor *f6 = new sensor::Sensor();
+  // sensor::Sensor *f7 = new sensor::Sensor();
+  // sensor::Sensor *f8 = new sensor::Sensor();
+  // sensor::Sensor *clear = new sensor::Sensor();
+  // sensor::Sensor *nir = new sensor::Sensor();
+  uint16_t _astep;
+  as7341_gain_t _gain;
+  uint8_t _atime;
+  uint16_t _channel_readings[12];
 };
 
-
-} // namespace as7341
-} // namespace esphome
+}  // namespace as7341
+}  // namespace esphome
