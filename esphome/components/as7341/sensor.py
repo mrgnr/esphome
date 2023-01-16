@@ -103,9 +103,9 @@ async def to_code(config):
     await cg.register_component(var, config)
     await i2c.register_i2c_device(var, config)
 
-    cg.add(var.setGain(config[CONF_GAIN]))
-    cg.add(var.setATIME(config[CONF_ATIME]))
-    cg.add(var.setASTEP(config[CONF_ASTEP]))
+    cg.add(var.set_gain(config[CONF_GAIN]))
+    cg.add(var.set_atime(config[CONF_ATIME]))
+    cg.add(var.set_astep(config[CONF_ASTEP]))
 
     for conf_id, set_sensor_func in SENSORS.items():
         sens = await sensor.new_sensor(config[conf_id])

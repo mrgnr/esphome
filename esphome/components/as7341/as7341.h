@@ -126,35 +126,35 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
   void set_clear_sensor(sensor::Sensor *clear_sensor) { this->clear = clear_sensor; }
   void set_nir_sensor(sensor::Sensor *nir_sensor) { this->nir = nir_sensor; }
 
-  void setGain(as7341_gain_t gain) { _gain = gain; }
-  void setATIME(uint8_t atime) { _atime = atime; }
-  void setASTEP(uint16_t astep) { _astep = astep; }
+  void set_gain(as7341_gain_t gain) { _gain = gain; }
+  void set_atime(uint8_t atime) { _atime = atime; }
+  void set_astep(uint16_t astep) { _astep = astep; }
 
-  as7341_gain_t getGain();
-  uint8_t getATIME();
-  uint16_t getASTEP();
-  bool setupGain(as7341_gain_t gain);
-  bool setupATIME(uint8_t atime);
-  bool setupASTEP(uint16_t astep);
+  as7341_gain_t get_gain();
+  uint8_t get_atime();
+  uint16_t get_astep();
+  bool setup_gain(as7341_gain_t gain);
+  bool setup_atime(uint8_t atime);
+  bool setup_astep(uint16_t astep);
 
-  uint16_t readChannel(as7341_adc_channel_t channel);
-  bool readChannels(uint16_t *data);
-  void setSMUXLowChannels(bool enable);
-  bool setSMUXCommand(as7341_smux_cmd_t command);
-  void configureSMUXLowChannels();
-  void configureSMUXHighChannels();
-  bool enableSmux();
+  uint16_t read_channel(as7341_adc_channel_t channel);
+  bool read_channels(uint16_t *data);
+  void set_smux_low_channels(bool enable);
+  bool set_smux_command(as7341_smux_cmd_t command);
+  void configure_smux_low_channels();
+  void configure_smux_high_channels();
+  bool enable_smux();
 
-  bool waitForData();
-  bool isDataReady();
-  bool enablePower(bool enable);
-  bool enableSpectralMeasurement(bool enable);
+  bool wait_for_data();
+  bool is_data_ready();
+  bool enable_power(bool enable);
+  bool enable_spectral_measurement(bool enable);
 
-  bool readRegisterBit(uint8_t address, uint8_t bitPosition);
-  bool writeRegisterBit(uint8_t address, bool value, uint8_t bitPosition);
-  bool setRegisterBit(uint8_t address, uint8_t bitPosition);
-  bool clearRegisterBit(uint8_t address, uint8_t bitPosition);
-  uint16_t swapBytes(uint16_t data);
+  bool read_register_bit(uint8_t address, uint8_t bit_position);
+  bool write_register_bit(uint8_t address, bool value, uint8_t bit_position);
+  bool set_register_bit(uint8_t address, uint8_t bit_position);
+  bool clear_register_bit(uint8_t address, uint8_t bit_position);
+  uint16_t swap_bytes(uint16_t data);
 
  protected:
   sensor::Sensor *f1{nullptr};
