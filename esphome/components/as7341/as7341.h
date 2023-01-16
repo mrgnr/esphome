@@ -134,17 +134,30 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
                 return;
             }
 
+            ESP_LOGCONFIG(TAG, "  Power on...");
             // Power on (enter IDLE state)
             if (!this->enablePower(true)) {
+                ESP_LOGCONFIG(TAG, "  Power on failed!!!");
                 this->mark_failed();
                 return;
             }
+            ESP_LOGCONFIG(TAG, "  Power on success");
 
             // Set configuration
             this->write_byte(AS7341_CONFIG, 0x00);
             uint8_t config;
             this->read_byte(AS7341_CONFIG, &config);
             ESP_LOGCONFIG(TAG, "  Config: 0x%X", config);
+
+            ESP_LOGCONFIG(TAG, "  Setup gain atime astep");
+            bool atime_success =  setupATIME(_atime);
+            bool astep_success = setupASTEP(_astep);
+            bool gain_success = setupGain(_gain);
+
+
+            ESP_LOGCONFIG(TAG, "    atime_success: %u", atime_success);
+            ESP_LOGCONFIG(TAG, "    astep_success: %u", astep_success);
+            ESP_LOGCONFIG(TAG, "    gain_success: %u", gain_success);
         }
         
         float get_setup_priority() const {
@@ -152,12 +165,12 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
         }
 
         void dump_config() override {
-            ESP_LOGCONFIG(TAG, "Dump config AS7341:");
+            ESP_LOGCONFIG(TAG, "AS7341:");
             LOG_I2C_DEVICE(this);
-            // ESP_LOGCONFIG(TAG, "  Product ID: %u", this->prod_rev_id_ & 0x0F);
-            // ESP_LOGCONFIG(TAG, "  Revision ID: %u", (this->prod_rev_id_ >> 4) & 0x0F);
-
-
+            LOG_UPDATE_INTERVAL(this);
+            ESP_LOGCONFIG(TAG, "  Gain: %u", getGain());
+            ESP_LOGCONFIG(TAG, "  ATIME: %u", getATIME());
+            ESP_LOGCONFIG(TAG, "  ASTEP: %u", getASTEP());
         }
 
         void update() override {
@@ -168,9 +181,13 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
             this->read_byte(AS7341_CONFIG, &config);
             ESP_LOGCONFIG(TAG, "  Config: 0x%X", config);
 
+            ESP_LOGCONFIG(TAG, "  Gain: %u", getGain());
+            ESP_LOGCONFIG(TAG, "  ATIME: %u", getATIME());
+            ESP_LOGCONFIG(TAG, "  ASTEP: %u", getASTEP());
+
 
             bool success = readChannels(_channel_readings);
-            ESP_LOGCONFIG(TAG, "  readChannels: %u", success);
+            // ESP_LOGCONFIG(TAG, "  readChannels: %u", success);
 
             // uint16_t ch0 = readChannel(AS7341_ADC_CHANNEL_0);
             // uint16_t f2 = readChannel(AS7341_ADC_CHANNEL_1);
@@ -218,15 +235,48 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
         void set_nir_sensor(sensor::Sensor *nir_sensor) { this->nir = nir_sensor; }
 
 
-        bool setGain(as7341_gain_t gain) {
+        void setGain(as7341_gain_t gain) {
+            _gain = gain;
+        }
+
+        void setATIME(uint8_t atime) {
+            _atime = atime;
+        }
+
+        void setASTEP(uint16_t astep) {
+            _astep = astep;
+        }
+
+        as7341_gain_t getGain() {
+            uint8_t data;
+            this->read_byte(AS7341_CFG1, &data);
+            return (as7341_gain_t)data;
+        }
+
+        uint8_t getATIME() {
+            uint8_t data;
+            this->read_byte(AS7341_ATIME, &data);
+            return data;
+        }
+
+        uint16_t getASTEP() {
+            uint16_t data;
+            this->read_byte_16(AS7341_ASTEP, &data);
+            return (data>>8) | (data<<8);
+        }
+
+        bool setupGain(as7341_gain_t gain) {
+            ESP_LOGCONFIG(TAG, "!!!! Gain: 0x%X", gain);
             return this->write_byte(AS7341_CFG1, gain);
         }
 
-        bool setATIME(uint8_t atime) {
+        bool setupATIME(uint8_t atime) {
+            ESP_LOGCONFIG(TAG, "!!!! ATIME: 0x%X", atime);
             return this->write_byte(AS7341_ATIME, atime);
         }
 
-        bool setASTEP(uint16_t astep) {
+        bool setupASTEP(uint16_t astep) {
+            ESP_LOGCONFIG(TAG, "!!!! ASTEP: 0x%X", astep);
             uint16_t astep_swapped = (astep>>8) | (astep<<8);
             return this->write_byte_16(AS7341_ASTEP, astep_swapped);
         }
@@ -258,7 +308,7 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
         }
 
         void setSMUXLowChannels(bool enable) {
-            ESP_LOGCONFIG(TAG, "Set SMUX low channels: %u", enable);
+            // ESP_LOGCONFIG(TAG, "Set SMUX low channels: %u", enable);
             enableSpectralMeasurement(false);
             setSMUXCommand(AS7341_SMUX_CMD_WRITE);
 
@@ -342,12 +392,12 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
                     break;
                 }
 
-                ESP_LOGCONFIG(TAG, "SMUX delay: %u", time);
+                // ESP_LOGCONFIG(TAG, "SMUX delay: %u", time);
 
                 delay(10);
             }
 
-            ESP_LOGCONFIG(TAG, "SMUX enabled success: %u", success);
+            // ESP_LOGCONFIG(TAG, "SMUX enabled success: %u", success);
             return success;
         }
 
@@ -381,7 +431,7 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
             // this->read_byte(AS7341_STATUS, &status);
             // bool success = readRegisterBit(AS7341_STATUS2, 6);
             bool success = readRegisterBit(AS7341_STATUS2, 6);
-            ESP_LOGCONFIG(TAG, "Is data ready?: %u", success);
+            // ESP_LOGCONFIG(TAG, "Is data ready?: %u", success);
             return success;
         }
 
@@ -453,6 +503,9 @@ class AS7341Component : public PollingComponent, public i2c::I2CDevice {
         // sensor::Sensor *f8 = new sensor::Sensor();
         // sensor::Sensor *clear = new sensor::Sensor();
         // sensor::Sensor *nir = new sensor::Sensor();
+        uint16_t _astep;
+        as7341_gain_t _gain;
+        uint8_t _atime;
         uint16_t _channel_readings[12];
 
 };
